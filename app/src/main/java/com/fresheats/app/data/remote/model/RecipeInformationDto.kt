@@ -26,7 +26,29 @@ data class RecipeInformationDto(
     val instructions: String? = null,
 
     @SerializedName("analyzedInstructions")
-    val analyzedInstructions: List<AnalyzedInstructionDto> = emptyList()
+    val analyzedInstructions: List<AnalyzedInstructionDto> = emptyList(),
+
+    @SerializedName("extendedIngredients")
+    val extendedIngredients: List<ExtendedIngredientDto> = emptyList(),
+
+    @SerializedName("nutrition")
+    val nutrition: NutritionDto? = null
+)
+
+data class ExtendedIngredientDto(
+    @SerializedName("name") val name: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("unit") val unit: String
+)
+
+data class NutritionDto(
+    @SerializedName("nutrients") val nutrients: List<NutrientDto> = emptyList()
+)
+
+data class NutrientDto(
+    @SerializedName("name") val name: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("unit") val unit: String
 )
 
 data class AnalyzedInstructionDto(
