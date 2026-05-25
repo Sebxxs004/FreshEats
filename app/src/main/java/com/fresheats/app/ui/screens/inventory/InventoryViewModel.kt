@@ -131,18 +131,27 @@ class InventoryViewModel : ViewModel() {
             }
     }
 
-    fun deleteIngredientFromInventory(item: InventoryItemDto) {
+    // ── ELIMINAR O ACTUALIZAR DEL INVENTARIO ───────────────────────────────
+
+    fun removeIngredient(item: InventoryItemDto) {
         val userId = auth.currentUser?.uid ?: return
         val docId = item.nombre.lowercase().replace(" ", "_")
-        
+
         firestore.collection("users").document(userId)
             .collection("inventory").document(docId)
             .delete()
-            .addOnSuccessListener {
-                Log.d("InventoryVM", "Ingrediente ${item.nombre} eliminado")
-            }
-            .addOnFailureListener { e ->
-                Log.e("InventoryVM", "Error al eliminar ingrediente", e)
-            }
+    }
+
+    fun updateIngredientAmount(item: InventoryItemDto, newAmount: Double) {
+        val userId = auth.currentUser?.uid ?: return
+        val docId = item.nombre.lowercase().replace(" ", "_")
+
+        if (newAmount <= 0) {
+            removeIngredient(item)
+        } else {
+            firestore.collection("users").document(userId)
+                .collection("inventory").document(docId)
+                .update("amount", newAmount)
+        }
     }
 }

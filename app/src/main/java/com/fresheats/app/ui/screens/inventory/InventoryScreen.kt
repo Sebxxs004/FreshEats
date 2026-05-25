@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
@@ -32,9 +34,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fresheats.app.data.model.InventoryItemDto
 import com.fresheats.app.data.remote.model.AutocompleteIngredientDto
+import com.fresheats.app.ui.theme.FreshEatsTheme
 import com.fresheats.app.ui.theme.GrayMid
 import com.fresheats.app.ui.theme.GraySurface
 import com.fresheats.app.ui.theme.GreenDark
+import com.fresheats.app.ui.theme.GreenLight
 import com.fresheats.app.ui.theme.GreenPrimary
 import com.fresheats.app.ui.theme.GreenSurface
 import com.fresheats.app.ui.theme.OrangePrimary
@@ -171,7 +175,9 @@ fun InventoryScreen(
                         items(inventoryItems) { item ->
                             InventoryItemCard(
                                 item = item,
-                                onDelete = { viewModel.deleteIngredientFromInventory(item) }
+                                onDelete = { viewModel.removeIngredient(item) },
+                                onIncrease = { viewModel.updateIngredientAmount(item, item.amount + 1.0) },
+                                onDecrease = { viewModel.updateIngredientAmount(item, item.amount - 1.0) }
                             )
                         }
                     }
@@ -275,9 +281,11 @@ fun IngredientSuggestionItem(
 }
 
 @Composable
-fun InventoryItemCard(
+private fun InventoryItemCard(
     item: InventoryItemDto,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -329,19 +337,51 @@ fun InventoryItemCard(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(OrangePrimary.copy(alpha = 0.15f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
-                    tint = OrangePrimary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(
+                        onClick = onDecrease,
+                        modifier = Modifier.size(24.dp).background(GraySurface, RoundedCornerShape(4.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = "Reducir",
+                            tint = GreenDark,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    
+                    IconButton(
+                        onClick = onIncrease,
+                        modifier = Modifier.size(24.dp).background(GreenLight.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Aumentar",
+                            tint = GreenDark,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
