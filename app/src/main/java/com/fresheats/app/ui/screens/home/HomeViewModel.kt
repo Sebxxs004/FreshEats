@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
@@ -83,31 +82,47 @@ class HomeViewModel : ViewModel() {
      */
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    // ── Estado del campo de texto ─────────────────────────────────────────────
-    /**
-     * Texto que el usuario escribe en el campo de ingredientes.
-     * Ej: "tomate, cebolla, pollo"
-     *
-     * Se usa `mutableStateOf` en lugar de StateFlow porque es más eficiente
-     * para valores de texto que cambian con cada tecla.
-     */
-    var searchQuery by mutableStateOf("")
-        private set
-
-    // ── Evento: el usuario modificó el campo de búsqueda ─────────────────────
-    fun onQueryChange(newQuery: String) {
-        searchQuery = newQuery
+    init {
+        viewModelScope.launch {
+            getInventoryIngredientsFlow().collect { ingredients ->
+                if (ingredients.isEmpty()) {
+                    _uiState.value = HomeUiState.Idle
+                } else {
+                    searchRecipes(ingredients.joinToString(","))
+                }
+            }
+        }
     }
 
-    // ── Evento: el usuario presionó "Buscar" ──────────────────────────────────
-    /**
-     * Valida la query y lanza la petición a Spoonacular.
-     * Transiciona los estados: Idle/Error → Loading → Success | Error
-     */
-    fun searchRecipes() {
-        // Validación: no buscar con campo vacío
-        val query = searchQuery.trim()
+    private fun getInventoryIngredientsFlow() = callbackFlow {
+        val user = auth.currentUser
+        if (user == null) {
+            trySend(emptyList<String>())
+            close()
+            return@callbackFlow
+        }
+
+        val listener = firestore
+            .collection("users").document(user.uid)
+            .collection("inventory")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList<String>())
+                    return@addSnapshotListener
+                }
+                
+                val ingredients = snapshot?.documents?.mapNotNull { it.getString("nombre") } ?: emptyList()
+                trySend(ingredients)
+            }
+
+        awaitClose { listener.remove() }
+    }
+
+    private var lastQuery: String = ""
+
+    private fun searchRecipes(query: String) {
         if (query.isBlank()) return
+        lastQuery = query
 
         viewModelScope.launch {
             _uiState.value = HomeUiState.Loading
@@ -119,7 +134,7 @@ class HomeViewModel : ViewModel() {
                         number       = 15,      // Máx resultados por búsqueda
                         ranking      = 1,       // Maximizar ingredientes usados
                         ignorePantry = true,    // Ignorar sal, agua, harina, etc.
-                        apiKey       = NetworkModule.SPOONACULAR_API_KEY
+                        apiKey       = com.fresheats.app.BuildConfig.SPOONACULAR_API_KEY
                     )
 
                 _uiState.value = HomeUiState.Success(recipes = results)
@@ -142,10 +157,14 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun retrySearch() {
+        if (lastQuery.isNotBlank()) {
+            searchRecipes(lastQuery)
+        }
+    }
+
     // ── Reiniciar al estado inicial ───────────────────────────────────────────
-    /** Vuelve al estado Idle (útil para el botón "Limpiar" o borrar query). */
     fun resetSearch() {
-        searchQuery = ""
         _uiState.value = HomeUiState.Idle
     }
 

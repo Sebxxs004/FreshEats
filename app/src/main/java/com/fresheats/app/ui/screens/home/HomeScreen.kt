@@ -134,18 +134,6 @@ fun HomeScreen() {
                 .padding(innerPadding)
         ) {
 
-            // ── Barra de búsqueda ─────────────────────────────────────────
-            SearchBar(
-                query         = viewModel.searchQuery,
-                onQueryChange = viewModel::onQueryChange,
-                onSearch      = {
-                    focusManager.clearFocus()
-                    viewModel.searchRecipes()
-                },
-                onClear       = viewModel::resetSearch,
-                isLoading     = uiState is HomeUiState.Loading
-            )
-
             // ── Área de contenido principal (con AnimatedContent) ─────────
             AnimatedContent(
                 targetState   = uiState,
@@ -174,7 +162,7 @@ fun HomeScreen() {
                     // ── Éxito — lista de recetas ───────────────────────────
                     is HomeUiState.Success -> {
                         if (state.recipes.isEmpty()) {
-                            EmptyResultsState(query = viewModel.searchQuery)
+                            EmptyResultsState()
                         } else {
                             RecipeList(
                                 recipes         = state.recipes,
@@ -188,7 +176,7 @@ fun HomeScreen() {
                     is HomeUiState.Error -> {
                         ErrorState(
                             message   = state.message,
-                            onRetry   = viewModel::searchRecipes
+                            onRetry   = viewModel::retrySearch
                         )
                     }
                 }
@@ -197,118 +185,6 @@ fun HomeScreen() {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SearchBar — Campo de ingredientes + Botón Buscar
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-private fun SearchBar(
-    query:         String,
-    onQueryChange: (String) -> Unit,
-    onSearch:      () -> Unit,
-    onClear:       () -> Unit,
-    isLoading:     Boolean
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(GreenPrimary, GreenSurface),
-                    startY = 0f, endY = 180f
-                )
-            )
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-    ) {
-        // ── Label descriptivo ──────────────────────────────────────────────
-        Text(
-            text  = "¿Qué tienes en tu cocina?",
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = White.copy(alpha = 0.90f)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // ── TextField de ingredientes ──────────────────────────────────────
-        Row(
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            OutlinedTextField(
-                value         = query,
-                onValueChange = onQueryChange,
-                placeholder   = {
-                    Text(
-                        "ej: tomate, cebolla, pollo",
-                        color = GrayMid.copy(alpha = 0.6f)
-                    )
-                },
-                leadingIcon   = {
-                    Icon(
-                        imageVector        = Icons.Default.Search,
-                        contentDescription = null,
-                        tint               = GreenPrimary
-                    )
-                },
-                trailingIcon  = if (query.isNotEmpty()) {
-                    {
-                        IconButton(onClick = onClear) {
-                            Icon(
-                                imageVector        = Icons.Default.Clear,
-                                contentDescription = "Limpiar búsqueda",
-                                tint               = GrayMid
-                            )
-                        }
-                    }
-                } else null,
-                singleLine    = true,
-                shape         = RoundedCornerShape(14.dp),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    imeAction      = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = { onSearch() }
-                ),
-                colors        = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor     = GreenBright,
-                    unfocusedBorderColor   = GreenLight,
-                    focusedContainerColor  = White,
-                    unfocusedContainerColor = White,
-                    cursorColor            = GreenPrimary
-                ),
-                modifier      = Modifier.weight(1f)
-            )
-
-            // ── Botón Buscar ───────────────────────────────────────────────
-            Button(
-                onClick   = onSearch,
-                enabled   = !isLoading && query.isNotBlank(),
-                shape     = RoundedCornerShape(14.dp),
-                colors    = ButtonDefaults.buttonColors(
-                    containerColor         = GreenDark,
-                    contentColor           = White,
-                    disabledContainerColor = GreenLight
-                ),
-                contentPadding = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
-                modifier  = Modifier.height(56.dp)
-            ) {
-                Icon(
-                    imageVector        = Icons.Default.Search,
-                    contentDescription = "Buscar",
-                    modifier           = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text  = "Buscar",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-        }
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RecipeList — LazyColumn con RecipeCards
@@ -422,7 +298,7 @@ private fun IdleState() {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text      = "Escribe los ingredientes que tienes en casa y te sugeriremos las mejores recetas.",
+            text      = "Tu inventario está vacío. Agrega ingredientes en la pestaña 'Inventario' para ver recetas automáticamente.",
             style     = MaterialTheme.typography.bodyMedium,
             color     = GrayMid,
             textAlign = TextAlign.Center,
@@ -441,12 +317,12 @@ private fun IdleState() {
 //    → Colores: OrangePrimary / GrayMid
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun EmptyResultsState(query: String) {
+private fun EmptyResultsState() {
     EmptyOrErrorColumn(
         icon    = Icons.Default.Search,  // 🖼️ Reemplazar por R.drawable.ic_no_results
         iconTint = OrangePrimary.copy(alpha = 0.5f),
-        title   = "Sin recetas para \"$query\"",
-        message = "Intenta con otros ingredientes o combina más elementos.",
+        title   = "Sin recetas",
+        message = "No encontramos recetas para los ingredientes actuales de tu inventario.",
         action  = null
     )
 }
