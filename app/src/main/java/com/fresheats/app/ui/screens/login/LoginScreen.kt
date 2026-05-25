@@ -400,52 +400,7 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
 
-                    // ── Divisor "o continúa con" ───────────────────────────
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        HorizontalDivider(
-                            modifier  = Modifier.weight(1f),
-                            color     = GreenLight,
-                            thickness = 1.dp
-                        )
-                        Text(
-                            text      = "  o continúa con  ",
-                            style     = MaterialTheme.typography.labelMedium,
-                            color     = GrayMid
-                        )
-                        HorizontalDivider(
-                            modifier  = Modifier.weight(1f),
-                            color     = GreenLight,
-                            thickness = 1.dp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // ── Botones de inicio de sesión social ────────────────
-                    // TODO: Agrega ic_google.svg e ic_apple.svg en res/drawable/
-                    // y reemplaza el Text de SocialLoginButton por un Icon.
-                    Row(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Botón Google
-                        SocialLoginButton(
-                            label    = "Google",
-                            modifier = Modifier.weight(1f),
-                            onClick  = { /* TODO: Integrar Google Sign-In */ }
-                        )
-                        // Botón Apple
-                        SocialLoginButton(
-                            label    = "Apple",
-                            modifier = Modifier.weight(1f),
-                            onClick  = { /* TODO: Integrar Apple Sign-In */ }
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(28.dp))
 
@@ -484,34 +439,7 @@ fun LoginScreen(
 
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Composable reutilizable: botón de login social
-// ─────────────────────────────────────────────────────────────────────────────
-@Composable
-private fun SocialLoginButton(
-    label:    String,
-    modifier: Modifier = Modifier,
-    onClick:  () -> Unit
-) {
-    androidx.compose.material3.OutlinedButton(
-        onClick   = onClick,
-        modifier  = modifier.height(48.dp),
-        shape     = RoundedCornerShape(12.dp),
-        border    = androidx.compose.foundation.BorderStroke(
-            width = 1.5.dp,
-            color = GreenLight
-        ),
-        colors    = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-            contentColor = GrayMid
-        )
-    ) {
-        // 🖼️ Aquí va el ícono: reemplazar este Text por un Icon con painterResource
-        Text(
-            text  = label,
-            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
-        )
-    }
-}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Colores personalizados para los OutlinedTextField
