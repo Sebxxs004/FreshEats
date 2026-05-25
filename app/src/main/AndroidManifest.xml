@@ -4,10 +4,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".FreshEatsApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_fresheats_logo"
         android:label="FreshEats"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FreshEats">
         <activity

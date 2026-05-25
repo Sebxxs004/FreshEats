@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "346419507765",
+    "project_id": "fresheats-fec8a",
+    "storage_bucket": "fresheats-fec8a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:346419507765:android:d0838d995b177db027377c",
+        "android_client_info": {
+          "package_name": "com.fresheats.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG4HYqXfLe-1j-xaMONH5DQUq3-xXKl7k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -91,7 +91,8 @@ class AuthViewModel : ViewModel() {
 
     /** Mapea excepciones comunes de Firebase a mensajes amigables en español */
     private fun mapFirebaseAuthError(e: Exception): String {
-        return when (val msg = e.message ?: "") {
+        val msg = e.message ?: ""
+        return when {
             msg.contains("ERROR_INVALID_EMAIL", ignoreCase = true) -> "El formato del correo es inválido."
             msg.contains("ERROR_USER_NOT_FOUND", ignoreCase = true) -> "No existe un usuario con este correo."
             msg.contains("ERROR_WRONG_PASSWORD", ignoreCase = true) -> "Contraseña incorrecta."
