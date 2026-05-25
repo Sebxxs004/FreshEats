@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fresheats.app.ui.screens.favorites.FavoritesScreen
+import com.fresheats.app.ui.screens.profile.ProfileScreen
 import com.fresheats.app.ui.theme.GrayMid
 import com.fresheats.app.ui.theme.GreenPrimary
 import com.fresheats.app.ui.theme.GreenSurface
@@ -70,8 +72,8 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Solo mostramos el BottomNav cuando estamos en HOME o FAVORITES
-    val showBottomBar = currentRoute == Screen.HOME || currentRoute == Screen.FAVORITES
+    // Solo mostramos el BottomNav cuando estamos en HOME, FAVORITES o PROFILE
+    val showBottomBar = currentRoute == Screen.HOME || currentRoute == Screen.FAVORITES || currentRoute == Screen.PROFILE
 
     Scaffold(
         bottomBar = {
@@ -147,6 +149,40 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
                             indicatorColor = GreenSurface
                         )
                     )
+
+                    // Pestaña: Perfil
+                    val isProfile = currentRoute == Screen.PROFILE
+                    NavigationBarItem(
+                        selected = isProfile,
+                        onClick = {
+                            navController.navigate(Screen.PROFILE) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Person,
+                                contentDescription = "Perfil"
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Perfil",
+                                fontWeight = if (isProfile) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = GreenPrimary,
+                            unselectedIconColor = GrayMid,
+                            selectedTextColor = GreenPrimary,
+                            unselectedTextColor = GrayMid,
+                            indicatorColor = GreenSurface
+                        )
+                    )
                 }
             }
         }
@@ -193,6 +229,19 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
         // ── Pantalla de Favoritos ──────────────────────────────────────────
         composable(route = Screen.FAVORITES) {
             FavoritesScreen()
+        }
+
+        // ── Pantalla de Perfil ─────────────────────────────────────────────
+        composable(route = Screen.PROFILE) {
+            ProfileScreen(
+                authViewModel = authViewModel,
+                onSignOutSuccess = {
+                    // Al cerrar sesión, limpiamos TODO el backstack y volvemos al LOGIN
+                    navController.navigate(Screen.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
     }

@@ -11,5 +11,6 @@ object Screen {
     const val HOME  = "home"
     const val REGISTER = "register"
     const val FAVORITES = "favorites"
-    // Añade aquí nuevas rutas: DETAIL, PROFILE, etc.
+    const val PROFILE = "profile"
+    // Añade aquí nuevas rutas: DETAIL, etc.
 }
