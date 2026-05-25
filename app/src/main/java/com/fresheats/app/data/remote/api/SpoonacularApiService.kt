@@ -1,7 +1,9 @@
 package com.fresheats.app.data.remote.api
 
 import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
+import com.fresheats.app.data.remote.model.RecipeInformationDto
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,16 +45,15 @@ interface SpoonacularApiService {
         @Query("apiKey")        apiKey:        String
     ): List<RecipeByIngredientsDto>
 
+    /** Obtener información detallada de una receta por ID */
+    @GET("recipes/{id}/information")
+    suspend fun getRecipeInformation(
+        @Path("id")          id:     Int,
+        @Query("apiKey")     apiKey: String
+    ): RecipeInformationDto
+
     // ─────────────────────────────────────────────────────────────────────────
     // 💡 ENDPOINTS SUGERIDOS PARA PRÓXIMAS ITERACIONES:
-    //
-    // /** Obtener información detallada de una receta por ID */
-    // @GET("recipes/{id}/information")
-    // suspend fun getRecipeInformation(
-    //     @Path("id")          id:     Int,
-    //     @Query("apiKey")     apiKey: String
-    // ): RecipeInformationDto
-    //
     // /** Buscar recetas con filtros avanzados (dieta, cocina, calorías...) */
     // @GET("recipes/complexSearch")
     // suspend fun searchRecipesComplex(
