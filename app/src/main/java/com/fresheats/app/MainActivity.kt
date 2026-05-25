@@ -16,6 +16,27 @@ import com.fresheats.app.ui.screens.home.HomeScreen
 import com.fresheats.app.ui.screens.login.AuthViewModel
 import com.fresheats.app.ui.screens.login.LoginScreen
 import com.fresheats.app.ui.screens.login.RegisterScreen
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.fresheats.app.ui.screens.favorites.FavoritesScreen
+import com.fresheats.app.ui.theme.GrayMid
+import com.fresheats.app.ui.theme.GreenPrimary
+import com.fresheats.app.ui.theme.GreenSurface
+import com.fresheats.app.ui.theme.White
 import com.fresheats.app.ui.theme.FreshEatsTheme
 
 class MainActivity : ComponentActivity() {
@@ -45,10 +66,96 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
     // podemos usarlo directamente para la ruta inicial.
     val startDestination = if (currentUser != null) Screen.HOME else Screen.LOGIN
 
-    NavHost(
-        navController    = navController,
-        startDestination = startDestination
-    ) {
+    // Obtenemos la ruta actual para saber si mostramos el BottomNav y qué pestaña resaltar
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Solo mostramos el BottomNav cuando estamos en HOME o FAVORITES
+    val showBottomBar = currentRoute == Screen.HOME || currentRoute == Screen.FAVORITES
+
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar(
+                    containerColor = White,
+                    contentColor = GreenPrimary
+                ) {
+                    // Pestaña: Buscar (Home)
+                    val isHome = currentRoute == Screen.HOME
+                    NavigationBarItem(
+                        selected = isHome,
+                        onClick = {
+                            navController.navigate(Screen.HOME) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Buscar"
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Buscar",
+                                fontWeight = if (isHome) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = GreenPrimary,
+                            unselectedIconColor = GrayMid,
+                            selectedTextColor = GreenPrimary,
+                            unselectedTextColor = GrayMid,
+                            indicatorColor = GreenSurface
+                        )
+                    )
+
+                    // Pestaña: Favoritos
+                    val isFavorites = currentRoute == Screen.FAVORITES
+                    NavigationBarItem(
+                        selected = isFavorites,
+                        onClick = {
+                            navController.navigate(Screen.FAVORITES) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = if (isFavorites) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Favoritos"
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Favoritos",
+                                fontWeight = if (isFavorites) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = GreenPrimary,
+                            unselectedIconColor = GrayMid,
+                            selectedTextColor = GreenPrimary,
+                            unselectedTextColor = GrayMid,
+                            indicatorColor = GreenSurface
+                        )
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController    = navController,
+            startDestination = startDestination,
+            modifier         = Modifier.padding(innerPadding)
+        ) {
         // ── Pantalla de Login ──────────────────────────────────────────────
         composable(route = Screen.LOGIN) {
             LoginScreen(
@@ -83,10 +190,10 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
             HomeScreen()
         }
 
-        // ── Aquí agrega nuevas rutas en el futuro ─────────────────────────
-        // composable(Screen.DETAIL + "/{foodId}") { backStack ->
-        //     val id = backStack.arguments?.getString("foodId")
-        //     FoodDetailScreen(foodId = id)
-        // }
+        // ── Pantalla de Favoritos ──────────────────────────────────────────
+        composable(route = Screen.FAVORITES) {
+            FavoritesScreen()
+        }
+
     }
 }
