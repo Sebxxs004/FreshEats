@@ -52,6 +52,14 @@ interface SpoonacularApiService {
         @Query("apiKey")     apiKey: String
     ): RecipeInformationDto
 
+    /** Autocompletado de ingredientes para inventario */
+    @GET("food/ingredients/autocomplete")
+    suspend fun autocompleteIngredient(
+        @Query("query")      query:  String,
+        @Query("number")     number: Int = 5,
+        @Query("apiKey")     apiKey: String
+    ): List<com.fresheats.app.data.remote.model.AutocompleteIngredientDto>
+
     // ─────────────────────────────────────────────────────────────────────────
     // 💡 ENDPOINTS SUGERIDOS PARA PRÓXIMAS ITERACIONES:
     // /** Buscar recetas con filtros avanzados (dieta, cocina, calorías...) */
