@@ -13,5 +13,6 @@ object Screen {
     const val FAVORITES = "favorites"
     const val INVENTORY = "inventory"
     const val PROFILE = "profile"
-    // Añade aquí nuevas rutas: DETAIL, etc.
+    const val DETAIL = "detail/{recipeId}"
+    fun createDetailRoute(recipeId: Int) = "detail/$recipeId"
 }

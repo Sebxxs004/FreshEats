@@ -64,15 +64,18 @@ import com.fresheats.app.ui.theme.White
 // El corazón alterna entre vacío (outline) y lleno (rojo) al tocar.
 // TODO: Conectar onFavoriteClick con Room (FavoriteDao) en próxima iteración.
 // ─────────────────────────────────────────────────────────────────────────────
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeCard(
     recipe:          RecipeByIngredientsDto,
     isFavorite:      Boolean,
     onFavoriteClick: (RecipeByIngredientsDto) -> Unit = {},
+    onClick:         () -> Unit = {},
     modifier:        Modifier = Modifier
 ) {
 
     Card(
+        onClick   = onClick,
         modifier  = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),

@@ -257,9 +257,13 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
             )
         }
 
-        // ── Pantalla Principal ─────────────────────────────────────────────
+        // 🏠 Pantalla Principal ────────────────────────────────────────────────────────
         composable(route = Screen.HOME) {
-            HomeScreen()
+            HomeScreen(
+                onRecipeClick = { recipeId ->
+                    navController.navigate(Screen.createDetailRoute(recipeId))
+                }
+            )
         }
 
         // ── Pantalla de Favoritos ──────────────────────────────────────────
@@ -282,6 +286,22 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // 👨‍🍳 Pantalla de Detalles de Receta ──────────────────────────────────────────
+        composable(
+            route = Screen.DETAIL,
+            arguments = listOf(androidx.navigation.navArgument("recipeId") { type = androidx.navigation.NavType.IntType })
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: return@composable
+            val viewModel: com.fresheats.app.ui.screens.detail.RecipeDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                factory = com.fresheats.app.ui.screens.detail.RecipeDetailViewModelFactory(recipeId)
+            )
+            
+            com.fresheats.app.ui.screens.detail.RecipeDetailScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

@@ -98,7 +98,9 @@ import com.fresheats.app.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onRecipeClick: (Int) -> Unit = {}
+) {
     val context = LocalContext.current
     val viewModel: HomeViewModel = viewModel()
 
@@ -167,7 +169,8 @@ fun HomeScreen() {
                             RecipeList(
                                 recipes         = state.recipes,
                                 favoriteIds     = favoriteIds,
-                                onFavoriteClick = viewModel::toggleFavorite
+                                onFavoriteClick = viewModel::toggleFavorite,
+                                onRecipeClick   = onRecipeClick
                             )
                         }
                     }
@@ -193,7 +196,8 @@ fun HomeScreen() {
 private fun RecipeList(
     recipes:         List<RecipeByIngredientsDto>,
     favoriteIds:     Set<Int>,
-    onFavoriteClick: (RecipeByIngredientsDto) -> Unit
+    onFavoriteClick: (RecipeByIngredientsDto) -> Unit,
+    onRecipeClick:   (Int) -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(vertical = 8.dp, horizontal = 0.dp),
@@ -227,7 +231,8 @@ private fun RecipeList(
             RecipeCard(
                 recipe          = recipe,
                 isFavorite      = favoriteIds.contains(recipe.id),
-                onFavoriteClick = onFavoriteClick
+                onFavoriteClick = onFavoriteClick,
+                onClick         = { onRecipeClick(recipe.id) }
             )
         }
 
