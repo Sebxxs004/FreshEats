@@ -9,5 +9,6 @@ package com.fresheats.app.navigation
 object Screen {
     const val LOGIN = "login"
     const val HOME  = "home"
+    const val REGISTER = "register"
     // Añade aquí nuevas rutas: DETAIL, FAVORITES, PROFILE, etc.
 }

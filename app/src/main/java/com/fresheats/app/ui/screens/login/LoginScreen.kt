@@ -39,8 +39,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import android.widget.Toast
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +59,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +71,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fresheats.app.R
 import com.fresheats.app.ui.theme.FreshEatsTheme
 import com.fresheats.app.ui.theme.GreenBright
@@ -88,13 +93,33 @@ import com.fresheats.app.ui.theme.White
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess:    () -> Unit,
+    onNavigateRegister: () -> Unit,
+    viewModel:         AuthViewModel = viewModel()
 ) {
+    val authState by viewModel.authState.collectAsState()
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    // ── Manejo del estado AuthState ────────────────────────
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> onLoginSuccess()
+            is AuthState.Error -> {
+                val errorMsg = (authState as AuthState.Error).message
+                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+            else -> {}
+        }
+    }
+
+    val isLoading = authState is AuthState.Loading
+
     // ── Estado del formulario ──────────────────────────────────────────────
     var email           by rememberSaveable { mutableStateOf("") }
     var password        by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
-    var emailError      by remember { mutableStateOf<String?>(null) }
 
     // ── Animación de entrada (fade + slide) ────────────────────────────────
     var formVisible by remember { mutableStateOf(false) }
@@ -104,8 +129,6 @@ fun LoginScreen(
         animationSpec = tween(durationMillis = 700, easing = EaseOutCubic),
         label = "formAlpha"
     )
-
-    val focusManager = LocalFocusManager.current
 
     // ── Gradiente de fondo principal ───────────────────────────────────────
     val backgroundGradient = Brush.verticalGradient(
@@ -241,10 +264,7 @@ fun LoginScreen(
                     // ── Campo: Correo electrónico ──────────────────────────
                     OutlinedTextField(
                         value         = email,
-                        onValueChange = {
-                            email      = it
-                            emailError = null
-                        },
+                        onValueChange = { email = it },
                         label         = { Text("Correo electrónico") },
                         placeholder   = { Text("tucorreo@ejemplo.com", color = GrayMid.copy(alpha = 0.6f)) },
                         leadingIcon   = {
@@ -254,8 +274,6 @@ fun LoginScreen(
                                 tint               = GreenPrimary
                             )
                         },
-                        isError       = emailError != null,
-                        supportingText = emailError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
                             imeAction    = ImeAction.Next
@@ -266,7 +284,8 @@ fun LoginScreen(
                         singleLine    = true,
                         shape         = RoundedCornerShape(14.dp),
                         colors        = loginTextFieldColors(),
-                        modifier      = Modifier.fillMaxWidth()
+                        modifier      = Modifier.fillMaxWidth(),
+                        enabled       = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -310,13 +329,16 @@ fun LoginScreen(
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 focusManager.clearFocus()
-                                handleLogin(email, password, { emailError = it }, onLoginSuccess)
+                                if(email.isNotBlank() && password.isNotBlank()) {
+                                    viewModel.login(email, password)
+                                }
                             }
                         ),
                         singleLine    = true,
                         shape         = RoundedCornerShape(14.dp),
                         colors        = loginTextFieldColors(),
-                        modifier      = Modifier.fillMaxWidth()
+                        modifier      = Modifier.fillMaxWidth(),
+                        enabled       = !isLoading
                     )
 
                     // ── "¿Olvidaste tu contraseña?" ────────────────────────
@@ -341,8 +363,13 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            handleLogin(email, password, { emailError = it }, onLoginSuccess)
+                            if(email.isNotBlank() && password.isNotBlank()) {
+                                viewModel.login(email, password)
+                            } else {
+                                Toast.makeText(context, "Llena todos los campos", Toast.LENGTH_SHORT).show()
+                            }
                         },
+                        enabled = !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -356,13 +383,21 @@ fun LoginScreen(
                             pressedElevation  = 2.dp
                         )
                     ) {
-                        Text(
-                            text  = "Iniciar Sesión",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize   = 17.sp
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = White,
+                                strokeWidth = 2.5.dp
                             )
-                        )
+                        } else {
+                            Text(
+                                text  = "Iniciar Sesión",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize   = 17.sp
+                                )
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -426,7 +461,8 @@ fun LoginScreen(
                             color = GrayMid
                         )
                         TextButton(
-                            onClick = { /* TODO: Navegar a RegisterScreen */ }
+                            onClick = onNavigateRegister,
+                            enabled = !isLoading
                         ) {
                             Text(
                                 text  = "Regístrate",
@@ -446,34 +482,7 @@ fun LoginScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Función privada: lógica de validación local (sin llamadas a la API)
-// Cuando implementes auth real, reemplaza el cuerpo de esta función.
-// ─────────────────────────────────────────────────────────────────────────────
-private fun handleLogin(
-    email:          String,
-    password:       String,
-    onEmailError:   (String) -> Unit,
-    onLoginSuccess: () -> Unit
-) {
-    // Validación mínima de formato
-    when {
-        email.isBlank() -> {
-            onEmailError("El correo no puede estar vacío")
-        }
-        !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-            onEmailError("Ingresa un correo válido")
-        }
-        password.length < 6 -> {
-            // TODO: Mostrar error de contraseña (agregar estado passwordError)
-        }
-        else -> {
-            // ✅ TODO: Aquí conectarás con tu AuthViewModel / AuthRepository
-            // Por ahora navegamos directamente a la pantalla principal
-            onLoginSuccess()
-        }
-    }
-}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Composable reutilizable: botón de login social
@@ -531,7 +540,7 @@ private fun loginTextFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 private fun LoginScreenPreview() {
     FreshEatsTheme {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(onLoginSuccess = {}, onNavigateRegister = {})
     }
 }
 
@@ -544,6 +553,6 @@ private fun LoginScreenPreview() {
 @Composable
 private fun LoginScreenDarkPreview() {
     FreshEatsTheme(darkTheme = true) {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(onLoginSuccess = {}, onNavigateRegister = {})
     }
 }
