@@ -111,7 +111,7 @@ fun HomeScreen() {
             TopAppBar(
                 title = {
                     Text(
-                        text  = "Fresh Eats",
+                        text  = "Cocina con lo que tienes",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
                             fontSize   = 22.sp
@@ -298,7 +298,7 @@ private fun IdleState() {
         )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text      = "Tu inventario está vacío. Agrega ingredientes en la pestaña 'Inventario' para ver recetas automáticamente.",
+            text      = "Tu nevera está vacía. ¡Ve a la pestaña de Inventario y agrega lo que tienes para recibir deliciosas sugerencias!",
             style     = MaterialTheme.typography.bodyMedium,
             color     = GrayMid,
             textAlign = TextAlign.Center,
