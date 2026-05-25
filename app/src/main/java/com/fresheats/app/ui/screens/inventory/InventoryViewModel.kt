@@ -105,7 +105,7 @@ class InventoryViewModel : ViewModel() {
 
     // ── AGREGAR AL INVENTARIO ───────────────────────────────────────────────
 
-    fun addIngredientToInventory(name: String, image: String?) {
+    fun addIngredientToInventory(name: String, image: String?, amount: Double, unit: String) {
         val userId = auth.currentUser?.uid ?: return
         
         // Usamos el nombre del ingrediente como ID del documento (limpio de espacios o minúsculas si prefieres)
@@ -113,7 +113,9 @@ class InventoryViewModel : ViewModel() {
         val item = InventoryItemDto(
             nombre = name,
             fechaAgregado = System.currentTimeMillis(),
-            imagenUrl = image
+            imagenUrl = image,
+            amount = amount,
+            unit = unit
         )
 
         firestore.collection("users").document(userId)

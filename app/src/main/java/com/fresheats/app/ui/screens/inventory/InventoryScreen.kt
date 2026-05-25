@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -22,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -29,8 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.fresheats.app.data.model.InventoryItemDto
 import com.fresheats.app.data.remote.model.AutocompleteIngredientDto
-import com.fresheats.app.ui.theme.GrayLight
 import com.fresheats.app.ui.theme.GrayMid
+import com.fresheats.app.ui.theme.GraySurface
 import com.fresheats.app.ui.theme.GreenDark
 import com.fresheats.app.ui.theme.GreenPrimary
 import com.fresheats.app.ui.theme.GreenSurface
@@ -46,6 +49,9 @@ fun InventoryScreen(
     val searchResults by viewModel.searchResults.collectAsState()
     val inventoryItems by viewModel.inventoryItems.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+
+    var showQuantityDialog by remember { mutableStateOf(false) }
+    var selectedIngredient by remember { mutableStateOf<AutocompleteIngredientDto?>(null) }
 
     Scaffold(
         topBar = {
@@ -129,13 +135,11 @@ fun InventoryScreen(
                                         IngredientSuggestionItem(
                                             ingredient = ingredient,
                                             onClick = {
-                                                viewModel.addIngredientToInventory(
-                                                    name = ingredient.name,
-                                                    image = ingredient.image
-                                                )
+                                                selectedIngredient = ingredient
+                                                showQuantityDialog = true
                                             }
                                         )
-                                        HorizontalDivider(color = GrayLight)
+                                        HorizontalDivider(color = GraySurface)
                                     }
                                 }
                             }
@@ -174,6 +178,64 @@ fun InventoryScreen(
                 }
             }
         }
+        
+        // ── DIÁLOGO PARA CANTIDAD Y UNIDAD ────────────────────────────────
+        if (showQuantityDialog && selectedIngredient != null) {
+            var amountText by remember { mutableStateOf("") }
+            var unitText by remember { mutableStateOf("") }
+
+            AlertDialog(
+                onDismissRequest = { showQuantityDialog = false },
+                title = { Text(
+                    text = "Agregar ${selectedIngredient?.name?.replaceFirstChar { it.uppercase() }}",
+                    fontWeight = FontWeight.Bold
+                ) },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = amountText,
+                            onValueChange = { amountText = it },
+                            label = { Text("Cantidad (ej. 3)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = unitText,
+                            onValueChange = { unitText = it },
+                            label = { Text("Unidad (ej. unidades, gramos)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val amount = amountText.replace(",", ".").toDoubleOrNull() ?: 1.0
+                            val unit = unitText.ifBlank { "unidades" }
+                            viewModel.addIngredientToInventory(
+                                name = selectedIngredient!!.name,
+                                image = selectedIngredient!!.image,
+                                amount = amount,
+                                unit = unit
+                            )
+                            showQuantityDialog = false
+                        }
+                    ) {
+                        Text("Agregar", color = GreenPrimary, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showQuantityDialog = false }) {
+                        Text("Cancelar", color = GrayMid)
+                    }
+                },
+                containerColor = White,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
     }
 }
 
@@ -199,7 +261,7 @@ fun IngredientSuggestionItem(
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(GrayLight)
+                .background(GraySurface)
         )
         
         Spacer(modifier = Modifier.width(16.dp))
@@ -231,7 +293,7 @@ fun InventoryItemCard(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(GrayLight),
+                    .background(GraySurface),
                 contentAlignment = Alignment.Center
             ) {
                 if (item.imagenUrl != null) {
@@ -253,6 +315,14 @@ fun InventoryItemCard(
                 text = item.nombre.replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = GreenDark,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            
+            Text(
+                text = "${if (item.amount % 1.0 == 0.0) item.amount.toInt() else item.amount} ${item.unit}",
+                style = MaterialTheme.typography.bodySmall,
+                color = GrayMid,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
