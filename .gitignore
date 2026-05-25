@@ -1,0 +1,32 @@
+### ══════════════════════════════════════════════════════════════════════════
+### FreshEats — .gitignore
+### ══════════════════════════════════════════════════════════════════════════
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
+/build/
+/app/build/
+*.apk
+*.aab
+*.aar
+
+# ── Android Studio ────────────────────────────────────────────────────────────
+/.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Gradle ────────────────────────────────────────────────────────────────────
+.gradle/
+local.properties
+
+# ── 🔐 SECRETOS — NUNCA SUBIR AL REPOSITORIO ─────────────────────────────────
+# Contiene SPOONACULAR_API_KEY y otras variables de entorno sensibles
+gradle.properties
+
+# ── Room schemas (opcional: comenta esta línea si quieres versionar schemas) ──
+/app/schemas/
+
+# ── Keystore / Firma ──────────────────────────────────────────────────────────
+*.jks
+*.keystore
+keystore.properties
