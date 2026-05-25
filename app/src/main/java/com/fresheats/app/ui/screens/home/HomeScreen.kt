@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -59,6 +60,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fresheats.app.data.local.FreshEatsDatabase
 import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
 import com.fresheats.app.ui.components.RecipeCard
 import com.fresheats.app.ui.components.ShimmerRecipeCard
@@ -97,10 +99,14 @@ import com.fresheats.app.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    viewModel: HomeViewModel = viewModel()
-) {
+fun HomeScreen() {
+    val context = LocalContext.current
+    val database = FreshEatsDatabase.getDatabase(context)
+    val factory = HomeViewModelFactory(database.favoriteRecipeDao())
+    val viewModel: HomeViewModel = viewModel(factory = factory)
+
     val uiState by viewModel.uiState.collectAsState()
+    val favoriteIds by viewModel.favoriteIds.collectAsState()
     val focusManager = LocalFocusManager.current
 
     Scaffold(
@@ -175,7 +181,8 @@ fun HomeScreen(
                         } else {
                             RecipeList(
                                 recipes         = state.recipes,
-                                onFavoriteClick = { /* TODO: guardar en Room */ }
+                                favoriteIds     = favoriteIds,
+                                onFavoriteClick = viewModel::toggleFavorite
                             )
                         }
                     }
@@ -312,6 +319,7 @@ private fun SearchBar(
 @Composable
 private fun RecipeList(
     recipes:         List<RecipeByIngredientsDto>,
+    favoriteIds:     Set<Int>,
     onFavoriteClick: (RecipeByIngredientsDto) -> Unit
 ) {
     LazyColumn(
@@ -345,6 +353,7 @@ private fun RecipeList(
         ) { recipe ->
             RecipeCard(
                 recipe          = recipe,
+                isFavorite      = favoriteIds.contains(recipe.id),
                 onFavoriteClick = onFavoriteClick
             )
         }

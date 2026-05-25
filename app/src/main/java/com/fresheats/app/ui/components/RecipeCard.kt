@@ -24,10 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,11 +67,10 @@ import com.fresheats.app.ui.theme.White
 @Composable
 fun RecipeCard(
     recipe:          RecipeByIngredientsDto,
+    isFavorite:      Boolean,
     onFavoriteClick: (RecipeByIngredientsDto) -> Unit = {},
     modifier:        Modifier = Modifier
 ) {
-    // Estado local del corazón — se reemplazará por el estado del Room DB
-    var isFavorite by rememberSaveable { mutableStateOf(false) }
 
     Card(
         modifier  = modifier
@@ -142,7 +137,6 @@ fun RecipeCard(
                 // Posicionado en la esquina superior derecha de la imagen
                 IconButton(
                     onClick   = {
-                        isFavorite = !isFavorite
                         onFavoriteClick(recipe)
                     },
                     modifier = Modifier
@@ -265,7 +259,8 @@ private fun RecipeCardPreview() {
                 usedIngredients      = emptyList(),
                 missedIngredients    = emptyList(),
                 unusedIngredients    = emptyList()
-            )
+            ),
+            isFavorite = false
         )
     }
 }

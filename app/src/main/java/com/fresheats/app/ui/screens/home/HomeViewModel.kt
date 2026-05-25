@@ -7,9 +7,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fresheats.app.data.remote.network.NetworkModule
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+import com.fresheats.app.data.local.dao.FavoriteRecipeDao
+import com.fresheats.app.data.local.entity.FavoriteRecipeEntity
+import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HomeViewModel
@@ -25,7 +32,19 @@ import kotlinx.coroutines.launch
 // TODO: Cuando implementes inyección de dependencias (Hilt), mueve la
 //       instancia del servicio al constructor con @Inject.
 // ─────────────────────────────────────────────────────────────────────────────
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val favoriteDao: FavoriteRecipeDao
+) : ViewModel() {
+
+    // ── Estado de Favoritos ──────────────────────────────────────────────────
+    /** Set de IDs de las recetas favoritas, observado desde Room. */
+    val favoriteIds: StateFlow<Set<Int>> = favoriteDao.getFavoriteIds()
+        .map { it.toSet() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptySet()
+        )
 
     // ── Estado de la UI ───────────────────────────────────────────────────────
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
@@ -100,5 +119,36 @@ class HomeViewModel : ViewModel() {
     fun resetSearch() {
         searchQuery = ""
         _uiState.value = HomeUiState.Idle
+    }
+
+    // ── Alternar favorito ────────────────────────────────────────────────────
+    fun toggleFavorite(recipe: RecipeByIngredientsDto) {
+        viewModelScope.launch {
+            val entity = FavoriteRecipeEntity(
+                id = recipe.id,
+                title = recipe.title,
+                image = recipe.image
+            )
+            if (favoriteIds.value.contains(recipe.id)) {
+                favoriteDao.deleteFavorite(entity)
+            } else {
+                favoriteDao.insertFavorite(entity)
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Factory para proveer el DAO sin inyección de dependencias como Hilt
+// ─────────────────────────────────────────────────────────────────────────────
+class HomeViewModelFactory(
+    private val favoriteDao: FavoriteRecipeDao
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return HomeViewModel(favoriteDao) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
