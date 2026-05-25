@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.fresheats.app.ui.screens.favorites.FavoritesScreen
+import com.fresheats.app.ui.screens.inventory.InventoryScreen
 import com.fresheats.app.ui.screens.profile.ProfileScreen
 import com.fresheats.app.ui.theme.GrayMid
 import com.fresheats.app.ui.theme.GreenPrimary
@@ -72,8 +74,8 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Solo mostramos el BottomNav cuando estamos en HOME, FAVORITES o PROFILE
-    val showBottomBar = currentRoute == Screen.HOME || currentRoute == Screen.FAVORITES || currentRoute == Screen.PROFILE
+    // Solo mostramos el BottomNav cuando estamos en HOME, FAVORITES, INVENTORY o PROFILE
+    val showBottomBar = currentRoute == Screen.HOME || currentRoute == Screen.FAVORITES || currentRoute == Screen.INVENTORY || currentRoute == Screen.PROFILE
 
     Scaffold(
         bottomBar = {
@@ -139,6 +141,40 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
                             Text(
                                 text = "Favoritos",
                                 fontWeight = if (isFavorites) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = GreenPrimary,
+                            unselectedIconColor = GrayMid,
+                            selectedTextColor = GreenPrimary,
+                            unselectedTextColor = GrayMid,
+                            indicatorColor = GreenSurface
+                        )
+                    )
+
+                    // Pestaña: Inventario
+                    val isInventory = currentRoute == Screen.INVENTORY
+                    NavigationBarItem(
+                        selected = isInventory,
+                        onClick = {
+                            navController.navigate(Screen.INVENTORY) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.List,
+                                contentDescription = "Inventario"
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "Inventario",
+                                fontWeight = if (isInventory) FontWeight.Bold else FontWeight.Normal
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -231,6 +267,11 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
             FavoritesScreen()
         }
 
+        // ── Pantalla de Inventario ─────────────────────────────────────────
+        composable(route = Screen.INVENTORY) {
+            InventoryScreen()
+        }
+
         // ── Pantalla de Perfil ─────────────────────────────────────────────
         composable(route = Screen.PROFILE) {
             ProfileScreen(
@@ -246,3 +287,5 @@ fun FreshEatsNavGraph(authViewModel: AuthViewModel = viewModel()) {
 
     }
 }
+}
+

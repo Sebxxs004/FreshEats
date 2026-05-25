@@ -128,4 +128,19 @@ class InventoryViewModel : ViewModel() {
                 Log.e("InventoryVM", "Error al agregar el ingrediente", e)
             }
     }
+
+    fun deleteIngredientFromInventory(item: InventoryItemDto) {
+        val userId = auth.currentUser?.uid ?: return
+        val docId = item.nombre.lowercase().replace(" ", "_")
+        
+        firestore.collection("users").document(userId)
+            .collection("inventory").document(docId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("InventoryVM", "Ingrediente ${item.nombre} eliminado")
+            }
+            .addOnFailureListener { e ->
+                Log.e("InventoryVM", "Error al eliminar ingrediente", e)
+            }
+    }
 }
