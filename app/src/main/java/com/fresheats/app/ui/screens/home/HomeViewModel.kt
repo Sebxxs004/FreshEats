@@ -13,10 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
-import com.fresheats.app.data.local.dao.FavoriteRecipeDao
-import com.fresheats.app.data.local.entity.FavoriteRecipeEntity
 import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HomeViewModel
@@ -32,19 +35,44 @@ import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
 // TODO: Cuando implementes inyección de dependencias (Hilt), mueve la
 //       instancia del servicio al constructor con @Inject.
 // ─────────────────────────────────────────────────────────────────────────────
-class HomeViewModel(
-    private val favoriteDao: FavoriteRecipeDao
-) : ViewModel() {
+// ─────────────────────────────────────────────────────────────────────────────
+class HomeViewModel : ViewModel() {
+
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
 
     // ── Estado de Favoritos ──────────────────────────────────────────────────
-    /** Set de IDs de las recetas favoritas, observado desde Room. */
-    val favoriteIds: StateFlow<Set<Int>> = favoriteDao.getFavoriteIds()
-        .map { it.toSet() }
+    /** Set de IDs de las recetas favoritas, observado desde Cloud Firestore en tiempo real. */
+    val favoriteIds: StateFlow<Set<Int>> = getFavoritesFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptySet()
         )
+
+    private fun getFavoritesFlow() = callbackFlow {
+        val user = auth.currentUser
+        if (user == null) {
+            trySend(emptySet())
+            close()
+            return@callbackFlow
+        }
+
+        val listener: ListenerRegistration = firestore
+            .collection("users").document(user.uid)
+            .collection("favorites")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptySet())
+                    return@addSnapshotListener
+                }
+                
+                val ids = snapshot?.documents?.mapNotNull { it.id.toIntOrNull() }?.toSet() ?: emptySet()
+                trySend(ids)
+            }
+
+        awaitClose { listener.remove() }
+    }
 
     // ── Estado de la UI ───────────────────────────────────────────────────────
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
@@ -123,32 +151,24 @@ class HomeViewModel(
 
     // ── Alternar favorito ────────────────────────────────────────────────────
     fun toggleFavorite(recipe: RecipeByIngredientsDto) {
-        viewModelScope.launch {
-            val entity = FavoriteRecipeEntity(
-                id = recipe.id,
-                title = recipe.title,
-                image = recipe.image
-            )
-            if (favoriteIds.value.contains(recipe.id)) {
-                favoriteDao.deleteFavorite(entity)
-            } else {
-                favoriteDao.insertFavorite(entity)
-            }
-        }
-    }
-}
+        val user = auth.currentUser ?: return // Si no hay usuario, no hacer nada
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Factory para proveer el DAO sin inyección de dependencias como Hilt
-// ─────────────────────────────────────────────────────────────────────────────
-class HomeViewModelFactory(
-    private val favoriteDao: FavoriteRecipeDao
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(favoriteDao) as T
+        val docRef = firestore
+            .collection("users").document(user.uid)
+            .collection("favorites").document(recipe.id.toString())
+
+        // Si la receta ya está en favoritos (la UI reacciona a favoriteIds.value)
+        if (favoriteIds.value.contains(recipe.id)) {
+            // Eliminar de forma segura ese documento específico en Firestore
+            docRef.delete()
+        } else {
+            // Guardar los datos esenciales en Firestore
+            val favoriteData = hashMapOf(
+                "id" to recipe.id,
+                "title" to recipe.title,
+                "image" to recipe.image
+            )
+            docRef.set(favoriteData)
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

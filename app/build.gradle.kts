@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // Kotlin Symbol Processing (KSP) — necesario para Room
-    alias(libs.plugins.ksp)
+    // Plugin de Google Services para Firebase
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -29,13 +29,6 @@ android {
             "SPOONACULAR_API_KEY",
             "\"${project.findProperty("SPOONACULAR_API_KEY") ?: ""}\""
         )
-
-        // Room: exportar esquema de BD para migraciones
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments["room.schemaLocation"] = "$projectDir/schemas"
-            }
-        }
     }
 
     buildTypes {
@@ -70,13 +63,6 @@ android {
 }
 
 // ──────────────────────────────────────────────
-// KSP — Room schema export path
-// ──────────────────────────────────────────────
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-    arg("room.incremental", "true")
-    arg("room.expandProjection", "true")
-}
 
 dependencies {
 
@@ -121,26 +107,24 @@ dependencies {
     implementation(libs.coil.svg)
 
     // ─────────────────────────────────────────────────────────────────────────
-    // ROOM  (base de datos local — favoritos)
-    // ─────────────────────────────────────────────────────────────────────────
-    // Room Runtime — capa de abstracción sobre SQLite
-    implementation(libs.room.runtime)
-    // Room KTX — extensiones de Kotlin y soporte para Coroutines/Flow
-    implementation(libs.room.ktx)
-    // Procesador de anotaciones Room (KSP, más rápido que KAPT)
-    ksp(libs.room.compiler)
-
-    // ─────────────────────────────────────────────────────────────────────────
     // COROUTINES
     // ─────────────────────────────────────────────────────────────────────────
     implementation(libs.kotlinx.coroutines.android)
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // FIREBASE
+    // ─────────────────────────────────────────────────────────────────────────
+    // Importa la Firebase BoM (Bill of Materials) para gestionar versiones
+    implementation(platform(libs.firebase.bom))
+    // Añade las librerías de Firebase deseadas (las versiones son gestionadas por la BoM)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 
     // ─────────────────────────────────────────────────────────────────────────
     // TESTING
     // ─────────────────────────────────────────────────────────────────────────
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

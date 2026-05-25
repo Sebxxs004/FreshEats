@@ -60,7 +60,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fresheats.app.data.local.FreshEatsDatabase
 import com.fresheats.app.data.remote.model.RecipeByIngredientsDto
 import com.fresheats.app.ui.components.RecipeCard
 import com.fresheats.app.ui.components.ShimmerRecipeCard
@@ -101,9 +100,7 @@ import com.fresheats.app.ui.theme.White
 @Composable
 fun HomeScreen() {
     val context = LocalContext.current
-    val database = FreshEatsDatabase.getDatabase(context)
-    val factory = HomeViewModelFactory(database.favoriteRecipeDao())
-    val viewModel: HomeViewModel = viewModel(factory = factory)
+    val viewModel: HomeViewModel = viewModel()
 
     val uiState by viewModel.uiState.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
