@@ -207,13 +207,41 @@ fun InventoryScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = unitText,
-                            onValueChange = { unitText = it },
-                            label = { Text("Unidad (ej. unidades, gramos)") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        
+                        val commonUnits = listOf("unidades", "gramos", "kilogramos", "mililitros", "litros", "tazas", "cucharadas")
+                        var expanded by remember { mutableStateOf(false) }
+                        
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = !expanded }
+                        ) {
+                            OutlinedTextField(
+                                value = unitText.ifBlank { "unidades" },
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Unidad de medida") },
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor()
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                commonUnits.forEach { selectionOption ->
+                                    DropdownMenuItem(
+                                        text = { Text(selectionOption) },
+                                        onClick = {
+                                            unitText = selectionOption
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 },
                 confirmButton = {
