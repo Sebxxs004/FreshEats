@@ -84,3 +84,7 @@ La UI fue construida a mano bajo un sistema de diseño propio basado en tonos sa
    - Consigue tu API Key de [Spoonacular](https://spoonacular.com/food-api).
    - Insértala en `SpoonacularApiService.kt` (o utiliza el entorno configurado: `d0fc710568fe4450a1b158bb0e83062c`).
 4. Compila y ejecuta (Requiere Android Studio y Kotlin configurado).
+
+## Designed by:
+
+Universidad de Santander UDES.
